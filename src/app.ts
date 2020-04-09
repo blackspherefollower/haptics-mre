@@ -33,7 +33,7 @@ export default class BPInteractionMRE {
 	private async started() {
 		// Currently only connecting to localhost.
 		//TODO: UI for selecting the Buttplug server URI on a per-user basis
-		const conn = new ButtplugNodeWebsocketClientConnector("ws://localhost:12345/buttplug", false);
+		const conn = new ButtplugNodeWebsocketClientConnector("wss://magnificent-eastern-ninja.glitch.me", false);
 		await this.client.Connect(conn);
 		await this.client.StartScanning();
 
