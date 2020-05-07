@@ -1,6 +1,9 @@
 import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 import { ButtplugClient } from 'buttplug';
 import { ButtplugNodeWebsocketClientConnector } from 'buttplug-node-websockets';
+import { User } from '@microsoft/mixed-reality-extension-sdk';
+
+MRE.log.enable("app");
 
 /**
  * BPInterfaceMRE Application - Showcasing avatar attachments.
@@ -25,12 +28,27 @@ export default class BPInteractionMRE {
 
 		// Hook the context events we're interested in.
 		this.context.onStarted(() => this.started());
+		this.context.onStopped(() => {MRE.log.info("app", "Last user has left")});
+		this.context.onUserJoined( async (user: User) => {
+			MRE.log.info("app", "User has joined: ", user);
+			const res = await user.prompt("Got Buttplug?", true);
+			if( res.submitted )
+			{
+				MRE.log.info("app", "User has buttplug: ", res.text, user.name, user.id);
+			}
+			else
+			{
+				MRE.log.info("app", "User hasn't a buttplug", user.name, user.id);
+			}
+		});
+		this.context.onUserLeft((user: User) => {MRE.log.info("app", "User has left: ", user)});
 	}
 
 	/**
 	 * Called when a BPInteractionMRE application session starts up.
 	 */
 	private async started() {
+		MRE.log.info("app", "Starting up");
 		// Currently only connecting to localhost.
 		//TODO: UI for selecting the Buttplug server URI on a per-user basis
 		const conn = new ButtplugNodeWebsocketClientConnector("wss://magnificent-eastern-ninja.glitch.me", false);

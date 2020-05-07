@@ -1,1 +1,27 @@
-<h1>BP Interaction MRE</h1>
+<html>
+    <head>
+        <script type="text/javascript">
+        function getStatus() {
+            var status = document.getElementById("status");
+            status.innerHTML = '';
+
+            var url = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            url += location.host + '/status';
+            ws = new WebSocket(url);
+            ws.addEventListener('message', function (event) {
+                console.log('Message from server ', event.data);
+                //var data = JSON.parse(event.data);
+                status.innerHTML = event.data;
+            });
+            ws.addEventListener('open', function (event) {
+                console.log('Open! ', event.data); ws.send("rooms");
+            });
+        }
+        </script>
+    </head>
+    <body>
+        <h1>BP Interaction MRE</h1>
+        <div id="status"></div>
+        <button onclick="getStatus()">Get Status</button>
+    </body>
+</html>

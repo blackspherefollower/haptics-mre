@@ -1,17 +1,16 @@
 {
-  "name": "wear-a-hat",
+  "name": "bt-interaction-mre",
   "version": "0.1.0",
   "private": true,
   "description": "",
   "main": "built/server.js",
-  "author": "Microsoft Corporation",
-  "license": "MIT",
+  "author": "blackspherefollower",
+  "license": "BSDv3",
   "keywords": [
     "mixed reality",
     "virtual reality",
     "vr",
     "altspacevr",
-    "sample",
     "node"
   ],
   "engines": {
@@ -25,19 +24,28 @@
     "build-only": "tsc --build",
     "lint": "eslint --ext .ts src",
     "start": "node .",
-    "debug": "node --nolazy --inspect-brk=9229 ."
+    "debug": "nodemon --inspect src/server.ts"
   },
   "devDependencies": {
+    "@types/etag": "^1.8.0",
+    "@types/query-string": "^6.3.0",
+    "@types/restify": "^8.4.2",
+    "@types/restify-errors": "^4.3.3",
+    "@types/semver": "^7.1.0",
+    "@types/uuid": "^7.0.3",
+    "@types/ws": "^7.2.4",
     "@typescript-eslint/eslint-plugin": "^2.17.0",
     "@typescript-eslint/parser": "^2.17.0",
     "eslint": "^6.8.0",
+    "nodemon": "^2.0.3",
+    "ts-node": "^8.10.1",
+    "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.7.5"
   },
   "dependencies": {
     "@microsoft/mixed-reality-extension-sdk": "^0.16.1",
     "@types/dotenv": "^6.1.0",
     "@types/node": "^10.3.1",
-    "@types/ws": "^7.2.3",
     "buttplug": "^0.13.0",
     "buttplug-node-websockets": "^0.13.0",
     "dotenv": "^6.2.0",
