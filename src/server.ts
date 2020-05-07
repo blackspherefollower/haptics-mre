@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import { resolve as resolvePath } from 'path';
 import App from './app';
 import * as Restify from 'restify';
-import { NotFoundError } from 'restify-errors';
 
 /* eslint-disable no-console */
 process.on('uncaughtException', err => console.log('uncaughtException', err));

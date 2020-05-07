@@ -13,8 +13,7 @@ import * as WS from 'ws';
 import {
 	Context,
 	log,
-	ParameterSet,
-    Guid
+	ParameterSet
 } from '@microsoft/mixed-reality-extension-sdk';
 import {
 	Adapter,
@@ -46,15 +45,15 @@ export type MultipeerAdapterOptions = AdapterOptions & {
 
 
 export function verifyClient2(
-    info: any, cb: (verified: boolean, code?: number, message?: string) => any): any {
+	info: any, cb: (verified: boolean, code?: number, message?: string) => any): any {
 
-    // See if this is our WS URL
-    const req = info.req || {};
-    if(QueryString.parseUrl(req['url'] || "").url.endsWith("/status")) {
-        return cb(true); 
-    }
+	// See if this is our WS URL
+	const req = info.req || {};
+	if(QueryString.parseUrl(req['url'] || "").url.endsWith("/status")) {
+		return cb(true); 
+	}
 
-    return verifyClient(info, cb);
+	return verifyClient(info, cb);
 }
 
 /**
@@ -71,7 +70,10 @@ export function verifyClient2(
 export class MultipeerAdapter2 extends Adapter {
 
 	// FUTURE: Make these child processes?
-	private sessions: { [id: string]: { session: Session, context: Context } } = {};
+	private sessions: { [id: string]: {
+		session: Session;
+		context: Context;
+	}; } = {};
 
 	/** @override */
 	protected get options(): MultipeerAdapterOptions { return this._options; }
@@ -145,10 +147,10 @@ export class MultipeerAdapter2 extends Adapter {
 
 		// Handle WebSocket connection upgrades
 		wss.on('connection', async (ws: WS, request: http.IncomingMessage) => {
-            if(QueryString.parseUrl(request.url).url.endsWith("/status")) {
-				await this.doStatus(ws);
+			if(QueryString.parseUrl(request.url).url.endsWith("/status")) {
+				this.doStatus(ws);
 				return;
-            }
+			}
 
 			try {
 				log.info('network', "New Multi-peer connection");
@@ -202,12 +204,11 @@ export class MultipeerAdapter2 extends Adapter {
 		}
 	}
 
-	private async doStatus(ws: WS) 
-	{
+	private doStatus(ws: WS) {
 		ws.on('message', () => {
-			let rooms: any = {};
-			for (let room of Object.keys(this.sessions)) {
-				let users: any = {};
+			const rooms: any = {};
+			for (const room of Object.keys(this.sessions)) {
+				const users: any = {};
 				this.sessions[room].context.users.forEach(v => { users[v.id.toString()] = v.name; });
 				rooms[room] = users;
 			}

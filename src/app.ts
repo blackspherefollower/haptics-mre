@@ -28,20 +28,17 @@ export default class BPInteractionMRE {
 
 		// Hook the context events we're interested in.
 		this.context.onStarted(() => this.started());
-		this.context.onStopped(() => {MRE.log.info("app", "Last user has left")});
+		this.context.onStopped(() => { MRE.log.info("app", "Last user has left") });
 		this.context.onUserJoined( async (user: User) => {
 			MRE.log.info("app", "User has joined: ", user);
 			const res = await user.prompt("Got Buttplug?", true);
-			if( res.submitted )
-			{
+			if( res.submitted ) {
 				MRE.log.info("app", "User has buttplug: ", res.text, user.name, user.id);
-			}
-			else
-			{
+			} else {
 				MRE.log.info("app", "User hasn't a buttplug", user.name, user.id);
 			}
 		});
-		this.context.onUserLeft((user: User) => {MRE.log.info("app", "User has left: ", user)});
+		this.context.onUserLeft((user: User) => { MRE.log.info("app", "User has left: ", user) });
 	}
 
 	/**

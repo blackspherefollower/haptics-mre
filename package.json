@@ -34,21 +34,21 @@
     "@types/semver": "^7.1.0",
     "@types/uuid": "^7.0.3",
     "@types/ws": "^7.2.4",
-    "@typescript-eslint/eslint-plugin": "^2.17.0",
-    "@typescript-eslint/parser": "^2.17.0",
+    "@typescript-eslint/eslint-plugin": "^2.31.0",
+    "@typescript-eslint/parser": "^2.31.0",
     "eslint": "^6.8.0",
     "nodemon": "^2.0.3",
     "ts-node": "^8.10.1",
     "ts-node-dev": "^1.0.0-pre.44",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@microsoft/mixed-reality-extension-sdk": "^0.16.1",
-    "@types/dotenv": "^6.1.0",
-    "@types/node": "^10.3.1",
-    "buttplug": "^0.13.0",
-    "buttplug-node-websockets": "^0.13.0",
-    "dotenv": "^6.2.0",
-    "ws": "^7.2.3"
+    "@microsoft/mixed-reality-extension-sdk": "^0.17.1",
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^13.13.5",
+    "buttplug": "^0.13.1",
+    "buttplug-node-websockets": "^0.13.2",
+    "dotenv": "^8.2.0",
+    "ws": "^7.2.5"
   }
 }
