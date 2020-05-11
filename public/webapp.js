@@ -38,6 +38,9 @@ function getRoom() {
     ws.addEventListener('open', function (event) {
         console.log('Open! ', event.data);
     });
+    ws.addEventListener('ping', function () {
+        ws.pong();
+    });
 }
 
 
@@ -127,7 +130,7 @@ async function setup_client(client, connector, container, forwarder = undefined)
         container.removeChild(child);
       }
     });
-  
+
     await client.Connect(connector);
     console.log("Connected!");
   }
@@ -153,7 +156,7 @@ const startConnection = async function (connector) {
     // running on glitch, the server address should be the same as the address
     // that's hosting this script. So we just build off of that.
 
-    const fconnector = new Buttplug.ButtplugClientForwarderBrowserWebsocketConnector((window.protocol === "https:" ? "wss://" : "ws://") + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + "/room/" + urlParams.get('room'));
+    const fconnector = new Buttplug.ButtplugClientForwarderBrowserWebsocketConnector((window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + "/room/" + urlParams.get('room'));
     const forwarder = new Buttplug.ButtplugClientForwarder("Forwarder connector", fconnector);
     await forwarder.Connect();
 

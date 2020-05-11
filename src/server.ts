@@ -39,18 +39,22 @@ server.adapter.handlePath("/status", (sessions, ws) => {
 	});
 });
 
+let timeout: NodeJS.Timeout = null;
 server.adapter.handlePath("/room", (sessions, ws) => {
 	let ran = "";
 	do {
 		ran = Math.random().toString(36).replace(/[^a-z0-9]+/ug, '').substr(0, 6);
 	} while (bridge.has(ran));
 	bridge.set(ran, null);
+	timeout = setInterval(() => ws.ping(), 10000);
 
 	ws.on('close', () => {
 		bridge.delete(ran);
+		clearInterval(timeout);
 	})
 
 	ws.send(JSON.stringify({room: ran}));
+
 });
 
 
@@ -84,7 +88,7 @@ server.adapter.handlePath("/room/:room", (sessions, ws, req, pattern) => {
 	connector.Listen();
   
 	// Now we set up the server that will host forwarded devices.
-	const bps = new ButtplugWebsocketServer("Remote Server", 0);
+	const bps = new ButtplugWebsocketServer("Remote Server", 10000);
 
 	// Forwarded devices use a "device communication manager", which is another
 	// common structure in Buttplug. Device communication managers handle a
