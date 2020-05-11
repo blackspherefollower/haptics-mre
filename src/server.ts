@@ -39,26 +39,31 @@ server.adapter.handlePath("/status", (sessions, ws) => {
 	});
 });
 
-let timeout: NodeJS.Timeout = null;
+let timeout1: NodeJS.Timeout = null;
 server.adapter.handlePath("/room", (sessions, ws) => {
 	let ran = "";
 	do {
 		ran = Math.random().toString(36).replace(/[^a-z0-9]+/ug, '').substr(0, 6);
 	} while (bridge.has(ran));
 	bridge.set(ran, null);
-	timeout = setInterval(() => ws.ping(), 10000);
+	timeout1 = setInterval(() => ws.ping(), 10000);
 
 	ws.on('close', () => {
 		bridge.delete(ran);
-		clearInterval(timeout);
-	})
+		clearInterval(timeout1);
+	});
 
 	ws.send(JSON.stringify({room: ran}));
 
 });
 
 
+let timeout2: NodeJS.Timeout = null;
 server.adapter.handlePath("/room/:room", (sessions, ws, req, pattern) => {
+	ws.on('close', () => {
+		clearInterval(timeout2);
+	});
+
 	const room = pattern.match(req.url)['room'];
 	if(room === undefined) {
 		ws.close();
@@ -77,6 +82,8 @@ server.adapter.handlePath("/room/:room", (sessions, ws, req, pattern) => {
 		ws.close();
 		return;
 	}
+
+	timeout2 = setInterval(() => ws.ping(), 10000);
   
 	// Set up the forwarder and server. First, we have to create a forwarder
 	// connector, which uses a websocket to listen for forwarder commands
@@ -88,7 +95,7 @@ server.adapter.handlePath("/room/:room", (sessions, ws, req, pattern) => {
 	connector.Listen();
   
 	// Now we set up the server that will host forwarded devices.
-	const bps = new ButtplugWebsocketServer("Remote Server", 10000);
+	const bps = new ButtplugWebsocketServer("Remote Server", 1000);
 
 	// Forwarded devices use a "device communication manager", which is another
 	// common structure in Buttplug. Device communication managers handle a
