@@ -9,6 +9,7 @@ import * as Restify from 'restify';
 import semver from 'semver';
 import UUID from 'uuid/v4';
 import * as WS from 'ws';
+import UrlPattern from 'url-pattern';
 
 import {
 	Context,
@@ -43,18 +44,26 @@ export type MultipeerAdapterOptions = AdapterOptions & {
 	peerAuthoritative?: boolean;
 };
 
-
-export function verifyClient2(
+function verifyClient2(
 	info: any, cb: (verified: boolean, code?: number, message?: string) => any): any {
 
 	// See if this is our WS URL
 	const req = info.req || {};
-	if(QueryString.parseUrl(req['url'] || "").url.endsWith("/status")) {
+	if(!new UrlPattern("/").match(req['url'] || "")) {
 		return cb(true); 
 	}
 
 	return verifyClient(info, cb);
 }
+
+export type AltWSHandler =
+	(sessions: { [id: string]: {
+		session: Session;
+		context: Context;
+	}; },
+	ws: WS,
+	req: http.IncomingMessage,
+	pattern: UrlPattern) => void;
 
 /**
  * The `MultipeerAdapter` is appropriate to use when the host environment has no authoritative
@@ -68,6 +77,8 @@ export function verifyClient2(
  *  - Peer-to-peer multiuser topologies
  */
 export class MultipeerAdapter2 extends Adapter {
+
+	private altPatterns = new Map<UrlPattern, AltWSHandler>();
 
 	// FUTURE: Make these child processes?
 	private sessions: { [id: string]: {
@@ -84,6 +95,10 @@ export class MultipeerAdapter2 extends Adapter {
 	constructor(options?: MultipeerAdapterOptions) {
 		super(options);
 		this._options = { peerAuthoritative: true, ...this._options } as AdapterOptions;
+	}
+
+	public handlePath(path: string, cb: AltWSHandler) {
+		this.altPatterns.set(new UrlPattern(path), cb);
 	}
 
 	/**
@@ -146,27 +161,35 @@ export class MultipeerAdapter2 extends Adapter {
 		const wss = new WS.Server({ server: this.server, verifyClient: verifyClient2 });
 
 		// Handle WebSocket connection upgrades
-		wss.on('connection', async (ws: WS, request: http.IncomingMessage) => {
-			if(QueryString.parseUrl(request.url).url.endsWith("/status")) {
-				this.doStatus(ws);
-				return;
+		wss.on('connection', async (ws: WS, req: http.IncomingMessage) => {
+			if(!new UrlPattern("/").match(req['url'] || "")) {
+				log.info('network', "New alt connection");
+				for(const k of Array.from(this.altPatterns.keys())) {
+					if(k.match(req['url'] || "")) {
+						this.altPatterns.get(k)(this.sessions, ws, req, k);
+						return; 
+					}
+				}
+				
+				log.error('network', "Alt connection unhandled");
+				ws.close();
 			}
 
 			try {
 				log.info('network', "New Multi-peer connection");
 
 				// Read the sessionId header.
-				let sessionId = request.headers[Constants.HTTPHeaders.SessionID] as string || UUID();
+				let sessionId = req.headers[Constants.HTTPHeaders.SessionID] as string || UUID();
 				sessionId = decodeURIComponent(sessionId);
 
 				// Read the client's version number
-				const version = semver.coerce(request.headers[Constants.HTTPHeaders.CurrentClientVersion] as string);
+				const version = semver.coerce(req.headers[Constants.HTTPHeaders.CurrentClientVersion] as string);
 
 				// Parse URL parameters.
-				const params = QueryString.parseUrl(request.url).query;
+				const params = QueryString.parseUrl(req.url).query;
 
 				// Get the client's IP address rather than the last proxy connecting to you.
-				const address = forwarded(request, request.headers);
+				const address = forwarded(req, req.headers);
 
 				// Create a WebSocket for this connection.
 				const conn = new WebSocket(ws, address.ip);
@@ -202,17 +225,5 @@ export class MultipeerAdapter2 extends Adapter {
 			log.error('network', e);
 			client.conn.close();
 		}
-	}
-
-	private doStatus(ws: WS) {
-		ws.on('message', () => {
-			const rooms: any = {};
-			for (const room of Object.keys(this.sessions)) {
-				const users: any = {};
-				this.sessions[room].context.users.forEach(v => { users[v.id.toString()] = v.name; });
-				rooms[room] = users;
-			}
-			ws.send(JSON.stringify(rooms));
-		});
 	}
 }

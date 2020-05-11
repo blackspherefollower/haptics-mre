@@ -41,7 +41,6 @@ module.exports = {
 		],
 		"linebreak-style": [
 			"warn",
-			"windows"
 		],
 		"max-classes-per-file": ["warn", 1],
 		"max-len": ["error", 120],

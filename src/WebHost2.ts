@@ -9,7 +9,6 @@ import { NotFoundError } from 'restify-errors';
 import etag from 'etag';
 
 import { log } from '@microsoft/mixed-reality-extension-sdk';
-import { Adapter } from '@microsoft/mixed-reality-extension-sdk/built/internal';
 import { MultipeerAdapter2 } from './MultiPeerAdapter2';
 
 type StaticBufferInfo = {
@@ -22,7 +21,7 @@ type StaticBufferInfo = {
  * Sets up an HTTP server, and generates an MRE context for your app to use.
  */
 export class WebHost2 {
-	private _adapter: Adapter;
+	private _adapter: MultipeerAdapter2;
 	private _baseDir: string;
 	private _baseUrl: string;
 
