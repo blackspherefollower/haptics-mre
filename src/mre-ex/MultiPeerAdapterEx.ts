@@ -14,7 +14,8 @@ import UrlPattern from 'url-pattern';
 import {
 	Context,
 	log,
-	ParameterSet
+	ParameterSet,
+	MultipeerAdapterOptions
 } from '@microsoft/mixed-reality-extension-sdk';
 import {
 	Adapter,
@@ -32,18 +33,6 @@ import {
 const forwarded: (res: http.IncomingMessage, headers: http.IncomingHttpHeaders) => {ip: string; port: number}
 	= require('forwarded-for'); /* eslint-disable-line @typescript-eslint/no-var-requires */
 
-/**
- * Multi-peer adapter options
- */
-export type MultipeerAdapterOptions = AdapterOptions & {
-	/**
-	 * @member peerAuthoritative (Optional. Default: true) Whether or not to run in the `peer-authoritative`
-	 * operating model. When true, one peer is picked to synchonize actor changes, animation states, etc.
-	 * When false, no state is synchronized between peers.
-	 */
-	peerAuthoritative?: boolean;
-};
-
 function verifyClient2(
 	info: any, cb: (verified: boolean, code?: number, message?: string) => any): any {
 
@@ -56,11 +45,14 @@ function verifyClient2(
 	return verifyClient(info, cb);
 }
 
-export type AltWSHandler =
-	(sessions: { [id: string]: {
+export type SessionMap =
+	{ [id: string]: {
 		session: Session;
 		context: Context;
-	}; },
+	}; };
+
+export type AltWSHandler =
+	(sessions: SessionMap,
 	ws: WS,
 	req: http.IncomingMessage,
 	pattern: UrlPattern) => void;
@@ -76,15 +68,12 @@ export type AltWSHandler =
  *  - AltspaceVR
  *  - Peer-to-peer multiuser topologies
  */
-export class MultipeerAdapter2 extends Adapter {
+export class MultipeerAdapterEx extends Adapter {
 
 	private altPatterns = new Map<UrlPattern, AltWSHandler>();
 
 	// FUTURE: Make these child processes?
-	private sessions: { [id: string]: {
-		session: Session;
-		context: Context;
-	}; } = {};
+	private sessions: SessionMap = {};
 
 	/** @override */
 	protected get options(): MultipeerAdapterOptions { return this._options; }

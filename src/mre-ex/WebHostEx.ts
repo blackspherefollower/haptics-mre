@@ -9,7 +9,7 @@ import { NotFoundError } from 'restify-errors';
 import etag from 'etag';
 
 import { log } from '@microsoft/mixed-reality-extension-sdk';
-import { MultipeerAdapter2 } from './MultiPeerAdapter2';
+import { MultipeerAdapterEx } from './MultiPeerAdapterEx';
 
 type StaticBufferInfo = {
 	buffer: Buffer;
@@ -20,8 +20,8 @@ type StaticBufferInfo = {
 /**
  * Sets up an HTTP server, and generates an MRE context for your app to use.
  */
-export class WebHost2 {
-	private _adapter: MultipeerAdapter2;
+export class WebHostEx {
+	private _adapter: MultipeerAdapterEx;
 	private _baseDir: string;
 	private _baseUrl: string;
 
@@ -36,7 +36,7 @@ export class WebHost2 {
 		baseUrl?: string;
 		port?: string | number;
 	} = {}) {
-		const pjson = require('../package.json'); /* eslint-disable-line @typescript-eslint/no-var-requires */
+		const pjson = require('../../package.json'); /* eslint-disable-line @typescript-eslint/no-var-requires */
 		log.info('app', `Node: ${process.version}`);
 		log.info('app', `${pjson.name}: v${pjson.version}`);
 
@@ -52,7 +52,7 @@ export class WebHost2 {
 		const port = options.port || process.env.PORT || 3901;
 
 		// Create a Multi-peer adapter
-		this._adapter = new MultipeerAdapter2({ port });
+		this._adapter = new MultipeerAdapterEx({ port });
 
 		// Start listening for new app connections from a multi-peer client.
 		this._adapter.listen()
