@@ -45,12 +45,18 @@ function verifyClient2(
 	return verifyClient(info, cb);
 }
 
+/**
+ * The SessionMap type: Session ID to the session + context
+ */
 export type SessionMap =
 	{ [id: string]: {
 		session: Session;
 		context: Context;
 	}; };
 
+/**
+ * The callback type for Alternative WS Handlers
+ */
 export type AltWSHandler =
 	(sessions: SessionMap,
 	ws: WS,
@@ -58,21 +64,13 @@ export type AltWSHandler =
 	pattern: UrlPattern) => void;
 
 /**
- * The `MultipeerAdapter` is appropriate to use when the host environment has no authoritative
- * server simulation, where each client owns some part of the simulation, and a connection from each client to the Mixed
- * Reality Extension (MRE) app is necessary. The MultipeerAdapter serves as an aggregation point for these client
- * connections. This adapter is responsible for app state synchronization to new clients, and for managing distributed
- * state ownership (i.e., which client is authoritative over what parts of the simulated state).
- *
- * Example hosts:
- *  - AltspaceVR
- *  - Peer-to-peer multiuser topologies
+ * The `MultipeerAdapterEx` is an modified 'MultipeerAdapter' that provides
+ * a means for handling additional WebSocket connections on alternative paths.
  */
 export class MultipeerAdapterEx extends Adapter {
 
 	private altPatterns = new Map<UrlPattern, AltWSHandler>();
 
-	// FUTURE: Make these child processes?
 	private sessions: SessionMap = {};
 
 	/** @override */
@@ -86,6 +84,14 @@ export class MultipeerAdapterEx extends Adapter {
 		this._options = { peerAuthoritative: true, ...this._options } as AdapterOptions;
 	}
 
+	/**
+	 * Registers a new Alternative WebSocket Handler
+	 * 
+	 * These can be used to add alternative communication channels to the MRe.
+	 * 
+	 * @param path The UrlPattern to handle
+	 * @param cb The callback method to handle the new WebSocket
+	 */
 	public handlePath(path: string, cb: AltWSHandler) {
 		this.altPatterns.set(new UrlPattern(path), cb);
 	}

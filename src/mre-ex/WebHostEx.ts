@@ -19,6 +19,8 @@ type StaticBufferInfo = {
 
 /**
  * Sets up an HTTP server, and generates an MRE context for your app to use.
+ * 
+ * This version of WebHost uses MultipeerAdapterEx instead of MultipeerAdapter
  */
 export class WebHostEx {
 	private _adapter: MultipeerAdapterEx;
