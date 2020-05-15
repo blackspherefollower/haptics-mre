@@ -3,7 +3,7 @@ import { ButtplugClient, ButtplugServer, ButtplugEmbeddedClientConnector } from 
 import { User, Guid } from '@microsoft/mixed-reality-extension-sdk';
 
 /**
- * BPInterfaceMRE Application - Showcasing avatar attachments.
+ * BPInterfaceMRE Application - Haptics from VR
  */
 export default class BPInteractionMRE {
 	// Container for preloaded hat prefabs.
@@ -15,29 +15,16 @@ export default class BPInteractionMRE {
 	 * Constructs a new instance of this class.
 	 * @param context The MRE SDK context.
 	 * @param baseUrl The baseUrl to this project's `./public` folder.
+	 * @param bridge The mappings between room IDs and Buttplug connection objects
 	 */
 	constructor(private context: MRE.Context, private baseUrl: string, private bridge: Map<string, ButtplugServer>) {
 		this.assets = new MRE.AssetContainer(context);
 
 		// Hook the context events we're interested in.
 		this.context.onStarted(() => this.started());
-		this.context.onStopped(() => { MRE.log.info("app", "Last user has left") });
-		this.context.onUserJoined( async (user: User) => {
-			MRE.log.info("app", "User has joined: ", user);
-			const res = await user.prompt("Got Buttplug?", true);
-			if( res.submitted ) {
-				MRE.log.info("app", "User has buttplug: ", res.text, user.name, user.id);
-				if(res.text.length === 6) {
-					if(bridge.has(res.text)) {
-						this.userMap.set(res.text, user.id);
-						this.createBuzzButton(user.id, res.text);
-					}
-				}
-			} else {
-				MRE.log.info("app", "User hasn't a buttplug", user.name, user.id);
-			}
-		});
-		this.context.onUserLeft((user: User) => { MRE.log.info("app", "User has left: ", user) });
+		this.context.onStopped(() => this.stopped());
+		this.context.onUserJoined(async (user: User) => await this.userJoined(user));
+		this.context.onUserLeft((user: User) => this.userLeft(user));
 	}
 
 	/**
@@ -46,7 +33,53 @@ export default class BPInteractionMRE {
 	private started() {
 		MRE.log.info("app", "Starting up");
 	}
-	
+
+	/**
+	 * Called when a BPInteractionMRE application session shuts down.
+	 */
+	private stopped() {
+		MRE.log.info("app", "Last user has left");
+	}
+
+	/**
+	 * Called when a user connects to the MRe
+	 * 
+	 * @param user The MRe user
+	 */
+	private async userJoined(user: User) {
+		MRE.log.info("app", "User has joined: ", user);
+		const res = await user.prompt("Got Buttplug?", true);
+		if( res.submitted ) {
+			MRE.log.info("app", "User has buttplug: ", res.text, user.name, user.id);
+			if(res.text.length === 6) {
+				if(this.bridge.has(res.text)) {
+					this.userMap.set(res.text, user.id);
+					this.createBuzzButton(user.id, res.text);
+				}
+			}
+		} else {
+			MRE.log.info("app", "User hasn't a buttplug", user.name, user.id);
+		}
+	}
+
+	/**
+	 * Called when a user disonnects from the MRe
+	 * 
+	 * @param user The MRe user
+	 */
+	private userLeft(user: User) {
+		MRE.log.info("app", "User has left: ", user);
+	}
+
+	/**
+	 * Render a Buzz button
+	 * 
+	 * The button is only visible for the target user and linked to a
+	 * a specific Buttplug connection.
+	 * 
+	 * @param user The user's Guid
+	 * @param room The room ID for the Buttplug connection
+	 */
 	private createBuzzButton(user: Guid, room: string) {
 		
 		// Create a parent object for all the menu items.
@@ -92,6 +125,14 @@ export default class BPInteractionMRE {
 		});
 	}
   
+	/**
+	 * Buzz click handler
+	 * 
+	 * Runs all user's vibrators for 3 seconds.
+	 * 
+	 * @param user The user's Guid
+	 * @param room The room ID for the Buttplug connection
+	 */
 	private async buzz(user: User, room: string) {
 		const bps = this.bridge.get(room);
 		if(bps === null || bps === undefined) {
