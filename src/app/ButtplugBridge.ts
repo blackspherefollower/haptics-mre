@@ -2,7 +2,6 @@ import { StatusEmitter } from "../buttplug/StatusEmitter";
 import {
 	ButtplugServerForwardedNodeWebsocketConnector
 } from "../buttplug/ButtplugServerForwardedNodeWebsocketConnector";
-import { ButtplugForwardedNodeWebsocketServer } from "../buttplug/ButtplugForwardedNodeWebsocketServer";
 import { ForwardedDeviceManager, ButtplugServer } from "buttplug";
 import * as WS from 'ws';
 import { log } from '@microsoft/mixed-reality-extension-sdk';
@@ -72,7 +71,7 @@ export class ButtplugBridge {
 		// Now we set up the Buttplug Server that will host forwarded devices.
 		// This server class class is defined in it's own file in../buttplug/,
 		// so in-depth explanation will happen there.
-		const bps = new ButtplugForwardedNodeWebsocketServer("Remote Server", statusEmmitter);
+		const bps = new ButtplugServer("Remote Server");
 
 		// Forwarded devices use a "device communication manager", which is another
 		// common structure in Buttplug. Device communication managers handle a

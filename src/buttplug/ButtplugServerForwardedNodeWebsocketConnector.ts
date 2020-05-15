@@ -5,14 +5,14 @@ import { EventEmitter } from "events";
 import { log } from "@microsoft/mixed-reality-extension-sdk";
 import { StatusEmitter } from "./StatusEmitter";
  
-
-// ButtplugServerForwardedConnectors are what the ForwardedDeviceManager
-// mentioned above uses to receive proxied devices. For this specific example,
-// it will listen on a websocket, but we can proxy over any network or IPC
-// connection.
-//
-// This will also handle some of our security, as the sharer password exchange
-// happens here.
+/**
+ * ButtplugServerForwardedNodeWebsocketConnector
+ *
+ * ButtplugServerForwardedConnectors are what the ForwardedDeviceManager
+ * uses to receive proxied devices. For this specific example, it will
+ * listen on a websocket (already initialed by a webserver), since that
+ * works well with browsers.
+ */
 export class ButtplugServerForwardedNodeWebsocketConnector extends 
 	EventEmitter implements ButtplugServerForwardedConnector {
 	
@@ -23,18 +23,18 @@ export class ButtplugServerForwardedNodeWebsocketConnector extends
 	}
 
 	// We'll never want this to disconnect on the connector end. It should stay
-	// connected for the lifetime of the sharer's session.
+	// connected for the lifetime of the browser's session.
 	public Disconnect = (): Promise<void> => {
 		return Promise.resolve();
 	}
 
-	// Send a message to the sharer.
+	// Send a message to the browser.
 	public SendMessage = (msg: ButtplugMessage): Promise<void> => {
 		this.wsClient.send("[" + msg.toJSON() + "]");
 		return Promise.resolve();
 	}
 
-	// The name here is a bit misleading, as since we're using expressWs, the
+	// The name here is a bit misleading, as since we're using an existing WebSoxocket, the
 	// listener is set up earlier. However, since this is expected to a server,
 	// we have to fill this in anyways, so we use this as a chance to set up the
 	// websocket client we've received.
@@ -49,10 +49,10 @@ export class ButtplugServerForwardedNodeWebsocketConnector extends
 			this.emit("disconnect");
 		});
 
-		// If the websocket closes, we want to update our status so another sharer
+		// If the websocket closes, we want to update our status so another client
 		// can connect (or the same one can reconnect), then let the rest of the
-		// system know that the sharer disconnected, so we can do things like
-		// kicking the controller out too.
+		// system know that the client disconnected, so we can do things like
+		// flag the event to the user in VR.
 		this.wsClient.on("close", () => {
 			log.info("app", "Local side disconnected");
 			this.forwarderConnected = false;
