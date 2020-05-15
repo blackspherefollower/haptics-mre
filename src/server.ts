@@ -6,7 +6,7 @@ import { ButtplugServer } from 'buttplug';
 import { log } from '@microsoft/mixed-reality-extension-sdk';
 import { ButtplugBridge } from './app/ButtplugBridge';
 import { Room } from './app/Room';
-import { Status } from './app/status';
+import { Status } from './app/Status';
 
 // Make the app loud for debuggings
 log.enable("app");
