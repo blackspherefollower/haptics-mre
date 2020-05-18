@@ -1,6 +1,6 @@
-import { ButtplugServer } from "buttplug";
 import * as WS from 'ws';
 import { SessionMap } from "../mre-ex/MultiPeerAdapterEx";
+import { Room } from "./Room";
 
 /**
  * Status - A debugging data channel
@@ -17,7 +17,7 @@ export class Status {
 	 * @param bridge The Buttplug connection map
 	 * @param ws The new WebSocket
 	 */
-	constructor(private sessions: SessionMap, private bridge: Map<string, ButtplugServer>, private ws: WS) {
+	constructor(private sessions: SessionMap, private bridge: Map<string, Room>, private ws: WS) {
 		ws.on('message', () => this.sendStatus());
 	}
 
@@ -39,7 +39,7 @@ export class Status {
 		}
 		
 		for (const conn of Array.from(this.bridge.keys())) {
-			bpconns[conn] = this.bridge.get(conn) !== null;
+			bpconns[conn] = this.bridge.get(conn)?.bpClient?.Connected || false;
 		}
 
 		this.ws.send(JSON.stringify({sessions: rooms, rooms: bpconns}));

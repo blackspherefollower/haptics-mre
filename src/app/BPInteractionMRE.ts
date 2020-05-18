@@ -1,6 +1,6 @@
 import * as MRE from '@microsoft/mixed-reality-extension-sdk';
-import { ButtplugClient, ButtplugServer, ButtplugEmbeddedClientConnector } from 'buttplug';
 import { User, Guid } from '@microsoft/mixed-reality-extension-sdk';
+import { Room } from './Room';
 
 /**
  * BPInterfaceMRE Application - Haptics from VR
@@ -11,13 +11,15 @@ export default class BPInteractionMRE {
 
 	private userMap = new Map<string, Guid>();
 
+	private roomMap = new Map<Guid, Room>();
+
 	/**
 	 * Constructs a new instance of this class.
 	 * @param context The MRE SDK context.
 	 * @param baseUrl The baseUrl to this project's `./public` folder.
 	 * @param bridge The mappings between room IDs and Buttplug connection objects
 	 */
-	constructor(private context: MRE.Context, private baseUrl: string, private bridge: Map<string, ButtplugServer>) {
+	constructor(private context: MRE.Context, private baseUrl: string, private bridge: Map<string, Room>) {
 		this.assets = new MRE.AssetContainer(context);
 
 		// Hook the context events we're interested in.
@@ -51,14 +53,30 @@ export default class BPInteractionMRE {
 		const res = await user.prompt("Got Buttplug?", true);
 		if( res.submitted ) {
 			MRE.log.info("app", "User has buttplug: ", res.text, user.name, user.id);
-			if(res.text.length === 6) {
-				if(this.bridge.has(res.text)) {
-					this.userMap.set(res.text, user.id);
-					this.createBuzzButton(user.id, res.text);
+			if(this.bridge.has(res.text) &&
+				( this.bridge.get(res.text).mreContext === null ||
+					this.bridge.get(res.text).mreUser === user.id) ) {
+
+				const room = this.bridge.get(res.text)
+				if(room.mreUser === user.id) {
+					return;
 				}
+
+				if( this.roomMap.has(user.id) ) {
+					this.userLeft(user, true);
+				}
+
+				this.userMap.set(res.text, user.id);
+				this.roomMap.set(user.id, room);
+				room.mreContext = this.context;
+				room.mreUser = user.id;
+				room.sendStatus();
+				this.createBuzzButton(user.id);
+			} else {
+				await user.prompt("Invalid identifier!");
 			}
 		} else {
-			MRE.log.info("app", "User hasn't a buttplug", user.name, user.id);
+			MRE.log.info("app", "User doesn't have buttplug", user.name, user.id, res);
 		}
 	}
 
@@ -67,8 +85,18 @@ export default class BPInteractionMRE {
 	 * 
 	 * @param user The MRe user
 	 */
-	private userLeft(user: User) {
-		MRE.log.info("app", "User has left: ", user);
+	private userLeft(user: User, justRoom = false) {
+		if(!justRoom) {
+			MRE.log.info("app", "User has left: ", user);
+		}
+		if(this.roomMap.has(user.id)) {
+			const room = this.roomMap.get(user.id);
+			room.mreContext = null;
+			room.mreUser = null;
+			room.sendStatus();
+			this.roomMap.delete(user.id);
+			this.userMap.delete(room.id);
+		}
 	}
 
 	/**
@@ -80,7 +108,7 @@ export default class BPInteractionMRE {
 	 * @param user The user's Guid
 	 * @param room The room ID for the Buttplug connection
 	 */
-	private createBuzzButton(user: Guid, room: string) {
+	private createBuzzButton(user: Guid) {
 		
 		// Create a parent object for all the menu items.
 		const menu = MRE.Actor.Create(this.context, {});
@@ -105,7 +133,7 @@ export default class BPInteractionMRE {
 
 		// Set a click handler on the button.
 		button.setBehavior(MRE.ButtonBehavior)
-			.onClick(userId => this.buzz(userId, room));
+			.onClick(userId => this.buzz(userId));
 
 		// Create a label for the menu entry.
 		MRE.Actor.Create(this.context, {
@@ -133,18 +161,16 @@ export default class BPInteractionMRE {
 	 * @param user The user's Guid
 	 * @param room The room ID for the Buttplug connection
 	 */
-	private async buzz(user: User, room: string) {
-		const bps = this.bridge.get(room);
-		if(bps === null || bps === undefined) {
+	private async buzz(user: User) {
+		const room = this.roomMap.get(user.id);
+		if(room === null || room === undefined) {
+			return;
+		}
+		if(!room.bpClient?.Connected || false) {
 			return;
 		}
 
-		const client = new ButtplugClient("MRe VR Client");
-		const conn = new ButtplugEmbeddedClientConnector();
-		conn.Server = bps;
-		await client.Connect(conn);
-		await client.StartScanning();
-		for(const dev of client.Devices) {
+		for(const dev of room.bpClient.Devices) {
 			if (dev.AllowedMessages.includes("VibrateCmd")) {
 				await dev.SendVibrateCmd(1.0);
 				

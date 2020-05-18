@@ -89,5 +89,8 @@ module.exports = {
 			{ "args": "none" }
 		],
 		"@typescript-eslint/unbound-method": "error"
-	}
+	},
+	"ignorePatterns": [
+		".eslintrc.js"
+	]
 };

@@ -2,7 +2,6 @@ import { WebHostEx } from './mre-ex/WebHostEx';
 import dotenv from 'dotenv';
 import { resolve as resolvePath } from 'path';
 import BPInteractionMRE from './app/BPInteractionMRE';
-import { ButtplugServer } from 'buttplug';
 import { log } from '@microsoft/mixed-reality-extension-sdk';
 import { ButtplugBridge } from './app/ButtplugBridge';
 import { Room } from './app/Room';
@@ -25,7 +24,7 @@ const server = new WebHostEx({
 });
 
 // Bridge context
-const bridge = new Map<string, ButtplugServer>();
+const bridge = new Map<string, Room>();
 
 //
 // Set up WebSocket handlers

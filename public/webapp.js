@@ -31,12 +31,19 @@ function getRoom() {
         if(data.hasOwnProperty("room")) {
            window.history.pushState("object or string", "Title", "/?room=" + data["room"]);
            document.getElementById("room-id").innerHTML = data["room"];
+           document.getElementById("bpConn").innerHTML = data["bpConnected"];
+           document.getElementById("mreConn").innerHTML = data["mreConnected"];
         } else {
             ws.close();
         }
     });
     ws.addEventListener('open', function (event) {
         console.log('Open! ', event.data);
+    });
+    ws.addEventListener('close', function (event) {
+      document.getElementById("room-id").innerHTML = "Discconected!";
+      document.getElementById("bpConn").innerHTML = "false";
+      document.getElementById("mreConn").innerHTML = "false";
     });
     ws.addEventListener('ping', function () {
         ws.pong();

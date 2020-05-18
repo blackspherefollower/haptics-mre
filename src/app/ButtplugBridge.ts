@@ -2,9 +2,16 @@ import { StatusEmitter } from "../buttplug/StatusEmitter";
 import {
 	ButtplugServerForwardedNodeWebsocketConnector
 } from "../buttplug/ButtplugServerForwardedNodeWebsocketConnector";
-import { ForwardedDeviceManager, ButtplugServer } from "buttplug";
+import {
+	ForwardedDeviceManager,
+	ButtplugServer,
+	ButtplugInitException,
+	ButtplugClient,
+	ButtplugEmbeddedClientConnector
+} from "buttplug";
 import * as WS from 'ws';
 import { log } from '@microsoft/mixed-reality-extension-sdk';
+import { Room } from "./Room";
 
 /**
  * ButtplugBridge - Maps a new Buttplug over WebSocket connection to a "room"
@@ -12,6 +19,8 @@ import { log } from '@microsoft/mixed-reality-extension-sdk';
 export class ButtplugBridge {
 	//We have to keep the WebSocket alive on cheap PaaS providers
 	private timeout: NodeJS.Timeout = null;
+
+	private room: Room = null;
 
 	/**
 	 * Constructs a new ButtplugBridge
@@ -27,24 +36,27 @@ export class ButtplugBridge {
 	 * @param ws The new WebSocket connection
 	 * @param room The room ID passed by URL path
 	 */
-	constructor(private bridge: Map<string, ButtplugServer>, private ws: WS, private room: string) {
+	constructor(private bridge: Map<string, Room>, private ws: WS, private roomId: string) {
 
 		// Validate that the room ID is valid and exists in the room map
-		if(room === undefined || room === null) {
+		if(roomId === undefined || roomId === null) {
+			ws.send("[" + new ButtplugInitException("Invalid connection request!").ErrorMessage.toJSON() + "]");
 			ws.close();
 			return;
 		}
 
-		log.info("app", "Connection to room " + room + " requested");
-		if(!bridge.has(room)) {
+		log.info("app", "Connection to room " + roomId + " requested");
+		if(!bridge.has(roomId)) {
+			ws.send("[" + new ButtplugInitException("Invalid connection request!").ErrorMessage.toJSON() + "]");
 			ws.close();
-			log.info("app", "No such room " + room);
+			log.info("app", "No such room " + roomId);
 			return;
 		}
 
 		// Make sure the room isn't already in use
-		if (bridge.get(room) !== null) {
-			log.info("app", "Connection is already active on room " + room);
+		if ((this.room = bridge.get(roomId)).bpServer !== null) {
+			log.info("app", "Connection is already active on room " + roomId);
+			ws.send("[" + new ButtplugInitException("Invalid connection request!").ErrorMessage.toJSON() + "]");
 			ws.close();
 			return;
 		}
@@ -82,8 +94,19 @@ export class ButtplugBridge {
 		bps.AddDeviceManager(fdm);
 		log.info("app", "Starting server...");
 
-		// Add the Buttplug connection to the room mapping
-		bridge.set(room, bps);
+
+		// Hook up an embedded client
+		const client = new ButtplugClient("Buttplug-MRe Client");
+		const conn = new ButtplugEmbeddedClientConnector();
+		conn.Server = bps;
+		client.Connect(conn)
+		.then(() => client.StartScanning())
+		.then(() => {
+			// Add the Buttplug connection to the room mapping
+			this.room.bpServer = bps;
+			this.room.bpClient = client;
+			this.room.sendStatus();
+		});
 	}
 
 	/**
@@ -91,5 +114,9 @@ export class ButtplugBridge {
 	 */
 	private close() {
 		clearInterval(this.timeout);
+		this.room.bpServer.Disconnect();
+		this.room.bpServer = null;
+		this.room.bpClient = null;
+		this.room.sendStatus();
 	}
 }
