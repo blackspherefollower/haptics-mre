@@ -40,7 +40,7 @@ export class ButtplugServerForwardedNodeWebsocketConnector extends
 	// websocket client we've received.
 	public Listen = (): Promise<void> => {		
 		// If the websocket errors out for some reason, just terminate connection.
-		this.wsClient.on("error", (err: any) => {
+		this.wsClient.on("error", (err: Error) => {
 			log.error("app", `Error in websocket connection: ${err.message}`);
 			this.forwarderConnected = false;
 			this.statusEmitter.emitLocalDisconnect();

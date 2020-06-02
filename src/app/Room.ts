@@ -82,7 +82,7 @@ export class Room {
 	/**
 	 * Helper method for sending room info to the browser
 	 */
-	public sendStatus() {
+	public sendStatus(): void {
 		this.ws.send(JSON.stringify({
 			room: this.id,
 			bpConnected: this.bpClient?.Connected || false,

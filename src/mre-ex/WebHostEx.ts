@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+
 import { resolve as urlResolve } from 'url';
 import * as Restify from 'restify';
 import { NotFoundError } from 'restify-errors';
@@ -22,14 +27,15 @@ type StaticBufferInfo = {
  * 
  * This version of WebHost uses MultipeerAdapterEx instead of MultipeerAdapter
  */
+
 export class WebHostEx {
 	private _adapter: MultipeerAdapterEx;
 	private _baseDir: string;
 	private _baseUrl: string;
 
-	public get adapter() { return this._adapter; }
-	public get baseDir() { return this._baseDir; }
-	public get baseUrl() { return this._baseUrl; }
+	public get adapter(): MultipeerAdapterEx { return this._adapter; }
+	public get baseDir(): string { return this._baseDir; }
+	public get baseUrl(): string { return this._baseUrl; }
 
 	private bufferMap: { [path: string]: StaticBufferInfo } = {};
 
@@ -38,7 +44,7 @@ export class WebHostEx {
 		baseUrl?: string;
 		port?: string | number;
 	} = {}) {
-		const pjson = require('../../package.json'); /* eslint-disable-line @typescript-eslint/no-var-requires */
+		const pjson = require('../../package.json');
 		log.info('app', `Node: ${process.version}`);
 		log.info('app', `${pjson.name}: v${pjson.version}`);
 

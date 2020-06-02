@@ -7,9 +7,9 @@ import * as http from 'http';
 import QueryString from 'query-string';
 import * as Restify from 'restify';
 import semver from 'semver';
-import UUID from 'uuid/v4';
 import * as WS from 'ws';
 import UrlPattern from 'url-pattern';
+import UUID from 'uuid';
 
 import {
 	Context,
@@ -30,19 +30,24 @@ import {
 	WebSocket
 } from '@microsoft/mixed-reality-extension-sdk/built/internal';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const forwarded: (res: http.IncomingMessage, headers: http.IncomingHttpHeaders) => {ip: string; port: number}
-	= require('forwarded-for'); /* eslint-disable-line @typescript-eslint/no-var-requires */
+	= require('forwarded-for');
+/* eslint-enable @typescript-eslint/no-var-requires */
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 function verifyClient2(
-	info: any, cb: (verified: boolean, code?: number, message?: string) => any): any {
-
+	info: { origin: string; secure: boolean; req: http.IncomingMessage },
+	cb: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void): void {
 	// See if this is our WS URL
-	const req = info.req || {};
-	if(!new UrlPattern("/").match(req['url'] || "")) {
-		return cb(true); 
+	const url = info?.req?.url || "";
+	if(!new UrlPattern("/").match(url)) {
+		cb(true);
+		return;
 	}
 
-	return verifyClient(info, cb);
+	verifyClient(info, cb);
 }
 
 /**
@@ -92,14 +97,14 @@ export class MultipeerAdapterEx extends Adapter {
 	 * @param path The UrlPattern to handle
 	 * @param cb The callback method to handle the new WebSocket
 	 */
-	public handlePath(path: string, cb: AltWSHandler) {
+	public handlePath(path: string, cb: AltWSHandler): void {
 		this.altPatterns.set(new UrlPattern(path), cb);
 	}
 
 	/**
 	 * Start the adapter listening for new incoming connections from engine clients
 	 */
-	public listen() {
+	public listen(): Promise<Restify.Server> {
 		if (!this.server) {
 			// If necessary, create a new web server
 			return new Promise<Restify.Server>((resolve) => {
@@ -174,7 +179,7 @@ export class MultipeerAdapterEx extends Adapter {
 				log.info('network', "New Multi-peer connection");
 
 				// Read the sessionId header.
-				let sessionId = req.headers[Constants.HTTPHeaders.SessionID] as string || UUID();
+				let sessionId = req.headers[Constants.HTTPHeaders.SessionID] as string || UUID.v4();
 				sessionId = decodeURIComponent(sessionId);
 
 				// Read the client's version number

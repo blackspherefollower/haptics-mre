@@ -78,7 +78,36 @@ module.exports = {
 				}
 			}
 		],
-		"@typescript-eslint/camelcase": ["warn", {"allow": ["^_[a-z][A-Za-z0-9]*$"]}],
+		"@typescript-eslint/naming-convention": [
+			"error",
+			{
+			  "selector": "default",
+			  "format": ["camelCase"]
+			},
+			{
+			  "selector": "variable",
+			  "format": ["camelCase", "UPPER_CASE"]
+			},
+			{
+			  "selector": "parameter",
+			  "format": ["camelCase"],
+			  "leadingUnderscore": "allow"
+			},
+			{
+			  "selector": "memberLike",
+			  "modifiers": ["private"],
+			  "format": ["camelCase"],
+			  "leadingUnderscore": "allow"
+			},
+			{
+			  "selector": "typeLike",
+			  "format": ["PascalCase"]
+			},
+			{
+			  "selector": "method",
+			  "format": ["PascalCase", "camelCase"]
+			}
+		  ],
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/no-empty-function": "off",
 		"@typescript-eslint/no-explicit-any": "off",

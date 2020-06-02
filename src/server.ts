@@ -44,4 +44,4 @@ server.adapter.handlePath("/room", (sessions, ws) => new Room(sessions, bridge, 
 // Handle Buttplug connections to the room
 // Buttplug already supports communication over WebSockets, so lets re-use what's already available
 server.adapter.handlePath("/room/:room", (_, ws, req, pattern) =>
-	new ButtplugBridge(bridge, ws, pattern.match(req.url)['room']));
+	new ButtplugBridge(bridge, ws, (pattern.match(req.url) as {[m: string]: string}|null)?.room));

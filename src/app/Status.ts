@@ -29,11 +29,11 @@ export class Status {
 	 * * rooms: Browser connections + whether they have active Buttplug connections
 	 */
 	private sendStatus() {
-		const rooms: any = {};
-		const bpconns: any = {};
+		const rooms: {[room: string]: {[userid: string]: string}} = {};
+		const bpconns: {[conn: string]: boolean} = {};
 		
 		for (const room of Object.keys(this.sessions)) {
-			const users: any = {};
+			const users: {[userid: string]: string} = {};
 			this.sessions[room].context.users.forEach(v => { users[v.id.toString()] = v.name; });
 			rooms[room] = users;
 		}
