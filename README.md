@@ -1,6 +1,6 @@
-# Buttplug MRe
+# Haptics MRe
 
-A PoC bridge between AltSpaceVR and Buttplug.io.
+A PoC bridge between AltSpaceVR and haptics hardware using [Intiface](https://intiface.com/desktop/)
 
 
 ## Testing the PoC
