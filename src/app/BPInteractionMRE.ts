@@ -1,6 +1,7 @@
 import * as MRE from '@microsoft/mixed-reality-extension-sdk';
 import { User, Guid } from '@microsoft/mixed-reality-extension-sdk';
 import { Room } from './Room';
+import { isNullOrUndefined } from 'util';
 
 /**
  * BPInterfaceMRE Application - Haptics from VR
@@ -14,6 +15,7 @@ export default class BPInteractionMRE {
 	private userMap = new Map<string, Guid>();
 
 	private roomMap = new Map<Guid, Room>();
+	private colliderMap = new Map<Guid, Map<MRE.AttachPoint, MRE.Actor>>();
 
 	/**
 	 * Constructs a new instance of this class.
@@ -52,7 +54,8 @@ export default class BPInteractionMRE {
 					app: {
 						position: { x: 0, y: -0.5, z: 0 },
 					}
-				}
+				},
+				collider: { geometry: { shape: MRE.ColliderType.Auto } }
 			}
 		});
 
@@ -147,6 +150,7 @@ export default class BPInteractionMRE {
 	 */
 	private userJoined(user: User) {
 		MRE.log.info("app", "User has joined: ", user);
+		this.createColliders(user.id);
 	}
 
 	private async promptForToken(user: User) {
@@ -207,7 +211,6 @@ export default class BPInteractionMRE {
 	 * a specific Buttplug connection.
 	 * 
 	 * @param user The user's Guid
-	 * @param room The room ID for the Buttplug connection
 	 */
 	private createBuzzButton(user: Guid) {
 		
@@ -280,6 +283,72 @@ export default class BPInteractionMRE {
 					await dev.SendStopDeviceCmd();
 				}, 3000);
 			}
+		}
+	}
+
+	private createColliders(user: Guid) {
+		// Create collider mesh
+		const colliderMesh = this.assets.createSphereMesh('contact', 0.1);
+
+		let map = new Map<MRE.AttachPoint, MRE.Actor>();
+		if(this.colliderMap.has(user)) {
+			map = this.colliderMap.get(user);
+			for(const k of map.keys()) {
+				map.get(k).destroy();
+				map.delete(k);
+			}
+		} else {
+			this.colliderMap.set(user, map);
+		}
+
+		const ap: MRE.AttachPoint[] = ["camera", "head", "neck", "hips", "center-eye",
+			"spine-top", "spine-middle", "spine-bottom", "left-eye", "left-upper-leg", 
+			"left-lower-leg", "left-foot", "left-toes", "left-shoulder", "left-upper-arm",
+			"left-lower-arm", "left-hand", "left-thumb", "left-index", "left-middle",
+			"left-ring", "left-pinky", "right-eye", "right-upper-leg", "right-lower-leg",
+			"right-foot" , "right-toes" , "right-shoulder" , "right-upper-arm",
+			"right-lower-arm", "right-hand", "right-thumb", "right-index",
+			"right-middle", "right-ring", "right-pinky"];
+
+		// Create colliders
+		for( const x of ap )
+		{
+			const collider = MRE.Actor.Create(this.context, {
+				actor: {
+					appearance: { meshId: colliderMesh.id },
+					collider: {
+						geometry: { shape: MRE.ColliderType.Auto },
+						isTrigger: true
+					},
+					transform: {
+						local: { position: { x: 0, y: 0, z: 0 } }
+					},
+					attachment: {
+						attachPoint: x,
+						userId: user
+					}
+				}
+			});
+			map.set(x, collider);
+		
+			collider.collider.onTrigger("trigger-enter", (data) => {
+				if( !isNullOrUndefined(data.attachment)) {
+					// collision with other user
+					this.roomMap.get(user)?.sendEvent("trigger-enter", x, {
+						user: this.context.user(data.attachment.userId)?.name,
+						userCollider: data.attachment.attachPoint
+					});
+				}
+			});
+			collider.collider.onTrigger("trigger-exit", (data) => {
+				if( !isNullOrUndefined(data.attachment)) {
+					// un-collision with other user
+					this.roomMap.get(user)?.sendEvent("trigger-exit", x, {
+						user: this.context.user(data.attachment.userId)?.name,
+						userCollider: data.attachment.attachPoint
+					});
+				}
+			});
 		}
 	}
 }

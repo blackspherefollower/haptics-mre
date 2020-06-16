@@ -90,5 +90,20 @@ export class Room {
 		}));
 	}
 
+	/**
+	 * Helper method for sending room info to the browser
+	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+	public sendEvent(event: string, collider: string, other: any): void {
+		this.ws.send(JSON.stringify({
+			room: this.id,
+			bpConnected: this.bpClient?.Connected || false,
+			mreConnected: this.mreContext !== null,
+			event,
+			collider,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			other
+		}));
+	}
 
 }
