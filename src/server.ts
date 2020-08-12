@@ -7,7 +7,7 @@ import { ButtplugBridge } from './app/ButtplugBridge';
 import { Room } from './app/Room';
 import { Status } from './app/Status';
 
-// Make the app loud for debuggings
+// Make the app loud for debugging
 log.enable("app");
 
 /* eslint-disable no-console */
@@ -38,7 +38,7 @@ server.adapter.onConnection(context => new BPInteractionMRE(context, server.base
 server.adapter.handlePath("/status", (sessions, ws) => new Status(sessions, bridge, ws));
 
 // Handle requests to the room endpoint
-// Rooms are unique per-broweser-connections which define the real-world side of the connection
+// Rooms are unique per-browser-connections which define the real-world side of the connection
 server.adapter.handlePath("/room", (sessions, ws) => new Room(sessions, bridge, ws));
 
 // Handle Buttplug connections to the room

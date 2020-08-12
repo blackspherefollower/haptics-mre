@@ -65,15 +65,15 @@ export class ButtplugBridge {
 		ws.on('close', () => this.close());
 		this.timeout = setInterval(() => this.ws.ping(), 10000);
 	
-		// The satusEmmitter will act as a signaller for events on either
-		// side of the Buttplug connection. We don't actaully use it right now.
+		// The statusEmmitter will act as a signaller for events on either
+		// side of the Buttplug connection. We don't actually use it right now.
 		const statusEmmitter = new StatusEmitter();
 
 		// Set up the Buttplug connection forwarder and Buttplug Server.
 		// First, we have to create a forwarder connector, which uses a
 		// websocket to listen for forwarder commands (AddDevice, RemoveDevice),
 		// and sends device commands sent to the new Buttplug Server back
-		// back to the browser's Buttplug connection forwardering client.
+		// back to the browser's Buttplug connection forwarding client.
 		// This connector class is defined in it's own file in../buttplug/,
 		// so in-depth explanation will happen there.
 		const connector = new ButtplugServerForwardedNodeWebsocketConnector(ws, statusEmmitter);

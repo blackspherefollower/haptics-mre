@@ -35,6 +35,9 @@ export default class BPInteractionMRE {
 
 	/**
 	 * Called when a BPInteractionMRE application session starts up.
+	 * 
+	 * Creates the Haptics Uplink object with rotating text above it.
+	 * Clicking on the object prompts the user for the room ID/pairing code.
 	 */
 	private started() {
 		MRE.log.info("app", "Starting up");
@@ -207,17 +210,19 @@ export default class BPInteractionMRE {
 	/**
 	 * Render a Buzz button
 	 * 
+	 * Note: This was part of the original PoC code, probably not
+	 * required in a world where the events ae reported to the
+	 * browser (where the standard embedded or websocket ButtplugClient
+	 * can be used directly, without the forwarder layer)
+	 * 
 	 * The button is only visible for the target user and linked to a
 	 * a specific Buttplug connection.
+	 * 
+	 * The button triggers the buzz() method below.
 	 * 
 	 * @param user The user's Guid
 	 */
 	private createBuzzButton(user: Guid) {
-		
-		// Create a parent object for all the menu items.
-		const menu = MRE.Actor.Create(this.context, {});
-		const y = 0.3;
-
 		// Create menu button
 		const buttonMesh = this.assets.createBoxMesh('button', 0.3, 0.3, 0.01);
 
@@ -262,6 +267,11 @@ export default class BPInteractionMRE {
 	 * 
 	 * Runs all user's vibrators for 3 seconds.
 	 * 
+	 * Note: This uses the Buttplug Fowrdarding infrastructure
+	 * because the original PoC assumed that the Buttplug server
+	 * would be relayed by another source. This is looking more
+	 * and more unnessesary.
+	 * 
 	 * @param user The user's Guid
 	 * @param room The room ID for the Buttplug connection
 	 */
@@ -286,6 +296,16 @@ export default class BPInteractionMRE {
 		}
 	}
 
+	/**
+	 * Collision based event generator
+	 * 
+	 * This method adds colliders to all reasonable mount points on
+	 * the user's avatar (realisistically, most of these are unnesseary)
+	 * 
+	 * The onTrigger() events cause the event to be reported to the
+	 * broswer based client, where the data can be used to start/stop
+	 * vibrations, etc.
+	 */
 	private createColliders(user: Guid) {
 		// Create collider mesh
 		const colliderMesh = this.assets.createSphereMesh('contact', 0.1);
@@ -311,8 +331,7 @@ export default class BPInteractionMRE {
 			"right-middle", "right-ring", "right-pinky"];
 
 		// Create colliders
-		for( const x of ap )
-		{
+		for( const x of ap ) {
 			const collider = MRE.Actor.Create(this.context, {
 				actor: {
 					appearance: { meshId: colliderMesh.id },

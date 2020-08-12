@@ -57,3 +57,54 @@ There's a few moving parts to this:
 
 * From inside VSCode: `F5`
 * From command line: `npm start`
+
+
+## Code Walkthrough
+
+### Server-Side
+
+Normally, MRes only communicate with AltSpace and don't have any browser interaction. That's not the case here, but to make that work, we needed to be able to add additional WebSocket handlers to the Restify HTTP Server that the MRe SDK is built on. To do that we had to modify part of the SDK (see (src/mre-ex/README.md)[src/mre-ex/README.md] for details).
+
+(src/server.ts)[src/server.ts] makes use of the extended versions of the MRe SDK classes, adding 3 extra WebSocket handlers in addition to the MRe itself:
+
+#### (src/app/BPInteractionMRE.ts)[src/app/BPInteractionMRE.ts]
+
+This is the MRe class itself. It handles all the AltSpace stuff:
+* Creating the uplink object
+* Prompting users for their pairing code
+* Linking users in AltSpace to their browser sessions
+* Adding colliders to users and reporting collisions to the appropriate user's browser
+* There's also a "Buzz" button which uses a forwarded Buttplug connection to vibrate connected devices for a few seconds, but this is to be removed in favour of using the the collision events sent to the client app (the client app will call the ButtplugClient directly)
+
+#### (src/app/ButtplugBridge.ts)[src/app/ButtplugBridge.ts]
+
+This is the WebSocket handler for the forwarded Buttplug connection infrastructure used by the "Buzz" button.
+
+I won't cover this in any further detail as it will be removed.
+
+#### (src/app/Room.ts)[src/app/Room.ts]
+
+This is the WebSocket handler that forms the client in-browser app to web-app link:
+* It issues a room ID/pairing code
+* It sends updates to the client app whenever the AltSpace or Buttplug connections change status
+* It also acts as the transport for the collision event reporting
+
+#### (src/app/Status.ts)[src/app/Status.ts]
+
+This is a temporary WebSocket handler that send the status of the whole web-app to the browser.
+
+It currently reports:
+* Connected MRe sessions (AltSpace rooms + Users in those rooms)
+* Connected user sessions (Browsers connected)
+
+It should be included in production environments.
+
+### Client (browser) Side
+
+#### (public/webapp.js)[public/webapp.js]
+
+This is the client-side logic, all written as a single JavaScript file loaded by index.html
+
+`getRoom();` is called at the end of the script, which sets up the room websocket, collects the room ID/token and keeps the browser->MRe connection up.
+
+The events returned on this websocket should be interpreted to invoke actions: either driving any attached devices, or indicating events to the user.

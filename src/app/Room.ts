@@ -9,16 +9,16 @@ import { Context, Guid } from "@microsoft/mixed-reality-extension-sdk";
  * Probably needs a better name, but right now it allocates an endpoint
  * for a Buttplug connection and acts as a holder object for that
  * connection. It also holds an MRe context reference for easy association
- * The idenfifier is used as part of the URL the Buttplug forwarder
+ * The identifier is used as part of the URL the Buttplug forwarder
  * connects to and by the user in AltSpaceVR to identify themselves to
  * the MRe and link their real world and VR contexts.
  * 
  * This connection provides both the room ID to the browser and status
- * information regarding whther the MRe considers the Buttplug and VR
+ * information regarding whether the MRe considers the Buttplug and VR
  * connections to be active.
  * 
  * This could be further extended to offer features like enabling/disabling
- * interaction with other users, mapping of devices (and maybe indivdual
+ * interaction with other users, mapping of devices (and maybe individual
  * device features) with particular colliders registered on the VR side, etc.
  */
 export class Room {
@@ -31,7 +31,7 @@ export class Room {
 	// The User ID for the user who connected the Context to the Room
 	public mreUser: Guid = null;
 
-	// The Buttplug Server object (contains the forwarded connection to the broswer)
+	// The Buttplug Server object (contains the forwarded connection to the browser)
 	public bpServer: ButtplugServer = null;
 
 	// The Buttplug Client object (connected in-process to bpServer)
@@ -58,7 +58,7 @@ export class Room {
 		// Add the room to the Buttplug connection map
 		this.bridge.set(this.id, this);
 
-		// We need to make sure the websock is seen as active,
+		// We need to make sure the websocket is seen as active,
 		// or PaaS services will kill the connection
 		ws.on('close', () => this.close());
 		this.timeout = setInterval(() => this.ws.ping(), 10000);
