@@ -51,6 +51,6 @@
     "buttplug-node-websockets": "^0.13.2",
     "dotenv": "^8.2.0",
     "url-pattern": "^1.0.3",
-    "ws": "^7.3.0"
+    "ws": "^7.4.6"
   }
 }
